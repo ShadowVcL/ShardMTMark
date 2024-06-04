@@ -2,8 +2,8 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.6
-// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles by clicking on them
+// @version        1.5
+// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles using Draw Tools delete mode
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
 // @updateURL      https://your-update-url-here
@@ -60,13 +60,11 @@ function wrapper(plugin_info) {
                 .addClass('active')
                 .text('Radius: on');
             window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.addHook('drawCreated', window.plugin.portalRadiusMarker.handleDrawnItems);
         } else {
             $('#portal-radius-marker-button')
                 .removeClass('active')
                 .text('Radius: off');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.removeHook('drawCreated', window.plugin.portalRadiusMarker.handleDrawnItems);
         }
     };
 
@@ -87,7 +85,17 @@ function wrapper(plugin_info) {
 
     // Handle click on the circle
     window.plugin.portalRadiusMarker.handleCircleClick = function(event) {
-        window.plugin.portalRadiusMarker.removeCircle(event.target);
+        if (window.plugin.drawTools && window.plugin.drawTools.deleteMode) {
+            window.plugin.portalRadiusMarker.removeCircle(event.target);
+        }
+    };
+
+    // Clear all circles drawn by this plugin
+    window.plugin.portalRadiusMarker.clearCircles = function() {
+        for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
+            window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
+        }
+        window.plugin.portalRadiusMarker.currentCircles = [];
     };
 
     // Remove a single circle
@@ -99,17 +107,17 @@ function wrapper(plugin_info) {
         }
     };
 
-    // Handle drawn items from Draw Tools
-    window.plugin.portalRadiusMarker.handleDrawnItems = function(event) {
-        if (event.layer instanceof L.Circle) {
-            window.plugin.portalRadiusMarker.currentCircles.push(event.layer);
-        }
-    };
-
     window.plugin.portalRadiusMarker.currentCircles = [];
 
     var setup = window.plugin.portalRadiusMarker.setup;
     setup.info = plugin_info; // Add the plugin info to the function as a property
     if (!window.bootPlugins) window.bootPlugins = [];
     window.bootPlugins.push(setup);
-    if (window.iitcLoaded)
+    if (window.iitcLoaded) setup();
+}
+
+// Inject the script into the site context
+var script = document.createElement('script');
+var info = { buildName: 'Portal Radius Marker', dateTimeVersion: '2024-06-03-001' };
+script.appendChild(document.createTextNode('(' + wrapper + ')(' + JSON.stringify(info) + ');'));
+(document.body || document.head || document.documentElement).appendChild(script);
