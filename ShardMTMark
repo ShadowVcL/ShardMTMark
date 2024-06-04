@@ -69,17 +69,30 @@ function wrapper(plugin_info) {
         }
     };
 
+    // Convert circle to polygon points
+    window.plugin.portalRadiusMarker.circleToPolygon = function(latlng, radius, numPoints) {
+        var angleStep = 360 / numPoints;
+        var points = [];
+        for (var i = 0; i < numPoints; i++) {
+            var angle = i * angleStep;
+            var radian = angle * (Math.PI / 180);
+            var lat = latlng.lat + (radius / 111320) * Math.cos(radian);
+            var lng = latlng.lng + (radius / (40075000 * Math.cos(latlng.lat * Math.PI / 180) / 360)) * Math.sin(radian);
+            points.push([lat, lng]);
+        }
+        return points;
+    };
+
     // Draw radius around the selected portal
     window.plugin.portalRadiusMarker.drawRadius = function(event) {
         if (window.plugin.portalRadiusMarker.active && event.selectedPortalGuid) {
             var portal = window.portals[event.selectedPortalGuid];
             if (portal) {
                 var latlng = portal.getLatLng();
-                // Draw a circle with a 251 meter radius using Draw Tools
-                var circle = L.circle(latlng, { radius: 251, color: 'blue', weight: 2, fill: false });
-                circle.on('contextmenu', window.plugin.portalRadiusMarker.removeCircle.bind(null, circle));
-                window.plugin.drawTools.drawnItems.addLayer(circle);
-                window.plugin.portalRadiusMarker.currentCircles.push(circle);
+                var points = window.plugin.portalRadiusMarker.circleToPolygon(latlng, 251, 40);
+                var polygon = L.polygon(points, { color: 'blue', weight: 2, fill: false });
+                window.plugin.drawTools.drawnItems.addLayer(polygon);
+                window.plugin.portalRadiusMarker.currentCircles.push(polygon);
             }
         }
     };
@@ -90,15 +103,6 @@ function wrapper(plugin_info) {
             window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
         }
         window.plugin.portalRadiusMarker.currentCircles = [];
-    };
-
-    // Remove a single circle
-    window.plugin.portalRadiusMarker.removeCircle = function(circle) {
-        window.plugin.drawTools.drawnItems.removeLayer(circle);
-        var index = window.plugin.portalRadiusMarker.currentCircles.indexOf(circle);
-        if (index > -1) {
-            window.plugin.portalRadiusMarker.currentCircles.splice(index, 1);
-        }
     };
 
     window.plugin.portalRadiusMarker.currentCircles = [];
