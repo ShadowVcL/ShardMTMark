@@ -2,8 +2,8 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.5
-// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles without automatic clearing
+// @version        1.4
+// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
 // @updateURL      https://your-update-url-here
@@ -50,6 +50,15 @@ function wrapper(plugin_info) {
                 }
             `)
             .appendTo('head');
+
+        // Override the Draw Tools delete function to also handle circles created by this plugin
+        var originalDelete = window.plugin.drawTools.delete;
+        window.plugin.drawTools.delete = function(layer) {
+            if (layer instanceof L.Circle && window.plugin.portalRadiusMarker.currentCircles.includes(layer)) {
+                window.plugin.portalRadiusMarker.removeCircle(layer);
+            }
+            return originalDelete.apply(this, arguments);
+        };
     };
 
     // Toggle the drawing of the radius
@@ -65,7 +74,6 @@ function wrapper(plugin_info) {
                 .removeClass('active')
                 .text('Radius: off');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            // Ya no se llama a clearCircles automáticamente
         }
     };
 
@@ -77,14 +85,13 @@ function wrapper(plugin_info) {
                 var latlng = portal.getLatLng();
                 // Draw a circle with a 251 meter radius using Draw Tools
                 var circle = L.circle(latlng, { radius: 251, color: 'blue', weight: 2, fill: false });
-                circle.on('contextmenu', window.plugin.portalRadiusMarker.removeCircle.bind(null, circle));
                 window.plugin.drawTools.drawnItems.addLayer(circle);
                 window.plugin.portalRadiusMarker.currentCircles.push(circle);
             }
         }
     };
 
-    // Clear all circles drawn by this plugin (not used automatically)
+    // Clear all circles drawn by this plugin
     window.plugin.portalRadiusMarker.clearCircles = function() {
         for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
             window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
