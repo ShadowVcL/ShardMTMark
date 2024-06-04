@@ -1,0 +1,56 @@
+// ==UserScript==
+// @id             iitc_plugin_radius_around_portal
+// @name           Portal Radius Marker
+// @category       Misc
+// @version        1.1
+// @description    Adds a 251 meter radius around the selected portal
+// @author         ShadowVcL
+// @downloadURL    https://github.com/ShadowVcL/shardKMmark
+// @updateURL      https://your-update-url-here
+// @match          *://intel.ingress.com/*
+// @match          *://intel-x.ingress.com/*
+// @grant          none
+// ==/UserScript==
+
+function wrapper(plugin_info) {
+    // ensure plugin framework is there, even if iitc is not yet loaded
+    if (typeof window.plugin !== 'function') window.plugin = function() {};
+
+    // use own namespace for plugin
+    window.plugin.portalRadiusMarker = function() {};
+
+    // Plugin setup
+    window.plugin.portalRadiusMarker.setup = function() {
+        // Create a layer group for the circles
+        window.plugin.portalRadiusMarker.radiusLayerGroup = new L.LayerGroup();
+        window.addLayerGroup('Portal Radius Marker', window.plugin.portalRadiusMarker.radiusLayerGroup, false);
+
+        // Hook into portal selection event
+        window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
+    };
+
+    // Draw radius around the selected portal
+    window.plugin.portalRadiusMarker.drawRadius = function(event) {
+        if (event.selectedPortalGuid) {
+            var portal = window.portals[event.selectedPortalGuid];
+            if (portal) {
+                var latlng = portal.getLatLng();
+                // Draw a circle with a 251 meter radius
+                var circle = L.circle(latlng, { radius: 251, color: 'blue', weight: 2, fill: false });
+                window.plugin.portalRadiusMarker.radiusLayerGroup.addLayer(circle);
+            }
+        }
+    };
+
+    var setup = window.plugin.portalRadiusMarker.setup;
+    setup.info = plugin_info; // Add the plugin info to the function as a property
+    if (!window.bootPlugins) window.bootPlugins = [];
+    window.bootPlugins.push(setup);
+    if (window.iitcLoaded) setup();
+}
+
+// Inject the script into the site context
+var script = document.createElement('script');
+var info = { buildName: 'Portal Radius Marker', dateTimeVersion: '2024-06-03-001' };
+script.appendChild(document.createTextNode('(' + wrapper + ')(' + JSON.stringify(info) + ');'));
+(document.body || document.head || document.documentElement).appendChild(script);
