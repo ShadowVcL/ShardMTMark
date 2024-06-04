@@ -2,8 +2,8 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.3
-// @description    Adds a 251 meter radius around the selected portal
+// @version        1.4
+// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
 // @updateURL      https://your-update-url-here
@@ -30,7 +30,7 @@ function wrapper(plugin_info) {
         // Add IITC button
         window.plugin.portalRadiusMarker.active = false;
         var button = $('<a>')
-            .text('Radius')
+            .text('Radius: off')
             .attr('title', 'Toggle Portal Radius Marker')
             .attr('id', 'portal-radius-marker-button')
             .click(window.plugin.portalRadiusMarker.toggleMarker)
@@ -56,10 +56,14 @@ function wrapper(plugin_info) {
     window.plugin.portalRadiusMarker.toggleMarker = function() {
         window.plugin.portalRadiusMarker.active = !window.plugin.portalRadiusMarker.active;
         if (window.plugin.portalRadiusMarker.active) {
-            $('#portal-radius-marker-button').addClass('active');
+            $('#portal-radius-marker-button')
+                .addClass('active')
+                .text('Radius: on');
             window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
         } else {
-            $('#portal-radius-marker-button').removeClass('active');
+            $('#portal-radius-marker-button')
+                .removeClass('active')
+                .text('Radius: off');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
             window.plugin.portalRadiusMarker.clearCircles();
         }
@@ -73,6 +77,7 @@ function wrapper(plugin_info) {
                 var latlng = portal.getLatLng();
                 // Draw a circle with a 251 meter radius using Draw Tools
                 var circle = L.circle(latlng, { radius: 251, color: 'blue', weight: 2, fill: false });
+                circle.on('contextmenu', window.plugin.portalRadiusMarker.removeCircle.bind(null, circle));
                 window.plugin.drawTools.drawnItems.addLayer(circle);
                 window.plugin.portalRadiusMarker.currentCircles.push(circle);
             }
@@ -87,6 +92,17 @@ function wrapper(plugin_info) {
         window.plugin.portalRadiusMarker.currentCircles = [];
     };
 
+    // Remove a single circle
+    window.plugin.portalRadiusMarker.removeCircle = function(circle) {
+        window.plugin.drawTools.drawnItems.removeLayer(circle);
+        var index = window.plugin.portalRadiusMarker.currentCircles.indexOf(circle);
+        if (index > -1) {
+            window.plugin.portalRadiusMarker.currentCircles.splice(index, 1);
+        }
+    };
+
+    window.plugin.portalRadiusMarker.currentCircles = [];
+
     var setup = window.plugin.portalRadiusMarker.setup;
     setup.info = plugin_info; // Add the plugin info to the function as a property
     if (!window.bootPlugins) window.bootPlugins = [];
@@ -99,3 +115,4 @@ var script = document.createElement('script');
 var info = { buildName: 'Portal Radius Marker', dateTimeVersion: '2024-06-03-001' };
 script.appendChild(document.createTextNode('(' + wrapper + ')(' + JSON.stringify(info) + ');'));
 (document.body || document.head || document.documentElement).appendChild(script);
+
