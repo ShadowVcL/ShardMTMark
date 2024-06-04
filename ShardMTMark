@@ -2,7 +2,7 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.2
+// @version        1.3
 // @description    Adds a 251 meter radius around the selected portal
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
@@ -21,29 +21,47 @@ function wrapper(plugin_info) {
 
     // Plugin setup
     window.plugin.portalRadiusMarker.setup = function() {
-        // Create a layer group for the circles
-        window.plugin.portalRadiusMarker.radiusLayerGroup = new L.LayerGroup();
-        window.addLayerGroup('Portal Radius Marker', window.plugin.portalRadiusMarker.radiusLayerGroup, false);
+        // Check for Draw Tools plugin
+        if (!window.plugin.drawTools) {
+            alert('Draw Tools plugin is required for Portal Radius Marker plugin to work.');
+            return;
+        }
 
         // Add IITC button
         window.plugin.portalRadiusMarker.active = false;
         var button = $('<a>')
             .text('Radius')
             .attr('title', 'Toggle Portal Radius Marker')
+            .attr('id', 'portal-radius-marker-button')
             .click(window.plugin.portalRadiusMarker.toggleMarker)
             .appendTo('#toolbox');
+
+        // Add CSS for active state
+        $('<style>')
+            .prop('type', 'text/css')
+            .html(`
+                #portal-radius-marker-button {
+                    cursor: pointer;
+                    color: white;
+                }
+                #portal-radius-marker-button.active {
+                    background-color: #ffce00;
+                    color: black;
+                }
+            `)
+            .appendTo('head');
     };
 
     // Toggle the drawing of the radius
     window.plugin.portalRadiusMarker.toggleMarker = function() {
         window.plugin.portalRadiusMarker.active = !window.plugin.portalRadiusMarker.active;
         if (window.plugin.portalRadiusMarker.active) {
-            $('#toolbox a:contains("Radius")').addClass('active');
+            $('#portal-radius-marker-button').addClass('active');
             window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
         } else {
-            $('#toolbox a:contains("Radius")').removeClass('active');
+            $('#portal-radius-marker-button').removeClass('active');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.plugin.portalRadiusMarker.radiusLayerGroup.clearLayers();
+            window.plugin.portalRadiusMarker.clearCircles();
         }
     };
 
@@ -53,11 +71,20 @@ function wrapper(plugin_info) {
             var portal = window.portals[event.selectedPortalGuid];
             if (portal) {
                 var latlng = portal.getLatLng();
-                // Draw a circle with a 251 meter radius
+                // Draw a circle with a 251 meter radius using Draw Tools
                 var circle = L.circle(latlng, { radius: 251, color: 'blue', weight: 2, fill: false });
-                window.plugin.portalRadiusMarker.radiusLayerGroup.addLayer(circle);
+                window.plugin.drawTools.drawnItems.addLayer(circle);
+                window.plugin.portalRadiusMarker.currentCircles.push(circle);
             }
         }
+    };
+
+    // Clear all circles drawn by this plugin
+    window.plugin.portalRadiusMarker.clearCircles = function() {
+        for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
+            window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
+        }
+        window.plugin.portalRadiusMarker.currentCircles = [];
     };
 
     var setup = window.plugin.portalRadiusMarker.setup;
