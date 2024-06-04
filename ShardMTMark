@@ -2,7 +2,7 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.1
+// @version        1.2
 // @description    Adds a 251 meter radius around the selected portal
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
@@ -25,13 +25,31 @@ function wrapper(plugin_info) {
         window.plugin.portalRadiusMarker.radiusLayerGroup = new L.LayerGroup();
         window.addLayerGroup('Portal Radius Marker', window.plugin.portalRadiusMarker.radiusLayerGroup, false);
 
-        // Hook into portal selection event
-        window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
+        // Add IITC button
+        window.plugin.portalRadiusMarker.active = false;
+        var button = $('<a>')
+            .text('Radius')
+            .attr('title', 'Toggle Portal Radius Marker')
+            .click(window.plugin.portalRadiusMarker.toggleMarker)
+            .appendTo('#toolbox');
+    };
+
+    // Toggle the drawing of the radius
+    window.plugin.portalRadiusMarker.toggleMarker = function() {
+        window.plugin.portalRadiusMarker.active = !window.plugin.portalRadiusMarker.active;
+        if (window.plugin.portalRadiusMarker.active) {
+            $('#toolbox a:contains("Radius")').addClass('active');
+            window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
+        } else {
+            $('#toolbox a:contains("Radius")').removeClass('active');
+            window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
+            window.plugin.portalRadiusMarker.radiusLayerGroup.clearLayers();
+        }
     };
 
     // Draw radius around the selected portal
     window.plugin.portalRadiusMarker.drawRadius = function(event) {
-        if (event.selectedPortalGuid) {
+        if (window.plugin.portalRadiusMarker.active && event.selectedPortalGuid) {
             var portal = window.portals[event.selectedPortalGuid];
             if (portal) {
                 var latlng = portal.getLatLng();
