@@ -2,8 +2,8 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.5
-// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles
+// @version        1.6
+// @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles without automatic clearing
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
 // @updateURL      https://your-update-url-here
@@ -59,7 +59,6 @@ function wrapper(plugin_info) {
                 .removeClass('active')
                 .text('Radius: off');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.plugin.portalRadiusMarker.clearCircles();
         }
     };
 
@@ -78,7 +77,7 @@ function wrapper(plugin_info) {
         }
     };
 
-    // Clear all circles drawn by this plugin
+    // Clear all circles drawn by this plugin (not used automatically)
     window.plugin.portalRadiusMarker.clearCircles = function() {
         for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
             window.map.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
