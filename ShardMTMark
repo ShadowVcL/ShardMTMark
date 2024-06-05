@@ -92,6 +92,7 @@ function wrapper(plugin_info) {
                 var polygon = L.polygon(points, { color: 'blue', weight: 2, fill: false });
                 polygon.on('click', function() {
                     window.plugin.drawTools.drawnItems.removeLayer(polygon);
+                    window.plugin.portalRadiusMarker.currentCircles = window.plugin.portalRadiusMarker.currentCircles.filter(c => c !== polygon);
                 });
                 window.plugin.drawTools.drawnItems.addLayer(polygon);
                 window.plugin.portalRadiusMarker.currentCircles.push(polygon);
