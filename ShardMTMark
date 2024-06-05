@@ -60,13 +60,11 @@ function wrapper(plugin_info) {
                 .addClass('active')
                 .text('Radius: on');
             window.addHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.addHook('drawToolsCreated', window.plugin.portalRadiusMarker.setupDeleteHandler);
         } else {
             $('#portal-radius-marker-button')
                 .removeClass('active')
                 .text('Radius: off');
             window.removeHook('portalSelected', window.plugin.portalRadiusMarker.drawRadius);
-            window.plugin.drawTools.clearDeleteLayer(window.plugin.portalRadiusMarker.deleteCircles);
         }
     };
 
@@ -97,17 +95,18 @@ function wrapper(plugin_info) {
                 window.plugin.drawTools.drawnItems.addLayer(layer);
                 window.plugin.drawTools.save();
                 window.plugin.portalRadiusMarker.currentCircles.push(layer);
+
+                layer.on('click', function() {
+                    window.plugin.drawTools.drawnItems.removeLayer(layer);
+                    window.plugin.drawTools.save();
+                    window.plugin.portalRadiusMarker.currentCircles = window.plugin.portalRadiusMarker.currentCircles.filter(c => c !== layer);
+                });
             }
         }
     };
 
-    // Setup the deletion handler
-    window.plugin.portalRadiusMarker.setupDeleteHandler = function() {
-        window.plugin.drawTools.addDeleteLayer(window.plugin.portalRadiusMarker.deleteCircles);
-    };
-
-    // Delete circles
-    window.plugin.portalRadiusMarker.deleteCircles = function() {
+    // Clear all circles drawn by this plugin
+    window.plugin.portalRadiusMarker.clearCircles = function() {
         for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
             window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
         }
