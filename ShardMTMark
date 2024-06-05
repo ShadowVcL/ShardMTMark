@@ -2,7 +2,7 @@
 // @id             iitc_plugin_radius_around_portal
 // @name           Portal Radius Marker
 // @category       Misc
-// @version        1.1
+// @version        1.4
 // @description    Adds a 251 meter radius around the selected portal and allows individual deletion of circles
 // @author         ShadowVcL
 // @downloadURL    https://github.com/ShadowVcL/shardKMmark
@@ -89,13 +89,18 @@ function wrapper(plugin_info) {
             if (portal) {
                 var latlng = portal.getLatLng();
                 var points = window.plugin.portalRadiusMarker.circleToPolygon(latlng, 251, 40);
-                var polygon = L.polygon(points, { color: 'blue', weight: 2, fill: false });
-                polygon.on('click', function() {
-                    window.plugin.drawTools.drawnItems.removeLayer(polygon);
-                    window.plugin.portalRadiusMarker.currentCircles = window.plugin.portalRadiusMarker.currentCircles.filter(c => c !== polygon);
+
+                // Use Draw Tools API to create a polygon
+                var layer = L.polygon(points, { color: 'blue', weight: 2, fill: false });
+                window.plugin.drawTools.drawnItems.addLayer(layer);
+                window.plugin.drawTools.save();
+                window.plugin.portalRadiusMarker.currentCircles.push(layer);
+
+                layer.on('click', function() {
+                    window.plugin.drawTools.drawnItems.removeLayer(layer);
+                    window.plugin.drawTools.save();
+                    window.plugin.portalRadiusMarker.currentCircles = window.plugin.portalRadiusMarker.currentCircles.filter(c => c !== layer);
                 });
-                window.plugin.drawTools.drawnItems.addLayer(polygon);
-                window.plugin.portalRadiusMarker.currentCircles.push(polygon);
             }
         }
     };
@@ -105,6 +110,7 @@ function wrapper(plugin_info) {
         for (var i = 0; i < window.plugin.portalRadiusMarker.currentCircles.length; i++) {
             window.plugin.drawTools.drawnItems.removeLayer(window.plugin.portalRadiusMarker.currentCircles[i]);
         }
+        window.plugin.drawTools.save();
         window.plugin.portalRadiusMarker.currentCircles = [];
     };
 
